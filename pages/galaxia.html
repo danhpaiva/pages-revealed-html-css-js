@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Uma estrela nova a cada mês. A cada ano, 12 estrelas viram um planeta.">
+    <title>A Galáxia | Pages Revealed</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <link rel="stylesheet" href="../assets/css/galaxia.css">
+</head>
+<body class="space">
+    <a class="back-btn" href="../index.html" aria-label="Voltar para a página inicial">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Início
+    </a>
+
+    <canvas id="sky" role="img" aria-label="Céu estrelado com uma estrela para cada mês e um planeta para cada ano completo"></canvas>
+    <div id="tip" class="tip" role="status"></div>
+
+    <section class="panel" aria-label="Linha do tempo da galáxia">
+        <div class="panel-top">
+            <div>
+                <p class="when" id="when">Outubro de 2026</p>
+                <p class="count" id="count" aria-live="polite">7 estrelas</p>
+            </div>
+            <div class="actions">
+                <button type="button" id="play" class="btn">&#9654; Reviver a jornada</button>
+                <button type="button" id="today" class="btn ghost">Hoje</button>
+            </div>
+        </div>
+        <label class="slider-wrap">
+            <span class="sr-only">Viajar no tempo</span>
+            <input type="range" id="slider" min="0" max="12" step="1" value="0">
+        </label>
+        <div class="ticks"><span id="tick-start">abr/2026</span><span id="tick-today">hoje</span><span id="tick-end"></span></div>
+        <p class="hint" id="hint"></p>
+    </section>
+
+    <script src="../assets/js/galaxia.js"></script>
+</body>
+</html>

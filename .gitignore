@@ -147,3 +147,10 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Ferramentas de IA / editores
+.claude/
+.kiro/
+
+# Saida de build local
+dist/

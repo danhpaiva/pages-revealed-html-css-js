@@ -1,124 +1,104 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Pages Revealed - Dossiê Digital Interativo de Preservação Emocional">
-    <title>Pages Revealed | Dossiê Digital</title>
-    
-    <!-- Google Fonts -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Pages Revealed - escolha sua jornada: o mago, o livro ou a galáxia.">
+    <title>Pages Revealed</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Marked.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
-    
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="assets/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/home.css">
 </head>
 <body>
-    <!-- Loading Indicator -->
-    <div id="loading-overlay" class="loading-overlay">
-        <div class="spinner"></div>
-        <p>Carregando dossiê...</p>
-    </div>
+    <canvas id="sky" aria-hidden="true"></canvas>
 
-    <!-- Error Message -->
-    <div id="error-message" class="error-message hidden">
-        <div class="error-content">
-            <h2>⚠️ Erro ao Carregar</h2>
-            <p id="error-text"></p>
-            <button id="retry-button" class="btn-primary">Tentar Novamente</button>
-        </div>
-    </div>
-
-    <!-- Main Application -->
-    <div id="app" class="app-container hidden">
-        <!-- Header -->
-        <header class="book-header">
-            <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <h1 class="book-title">Pages Revealed</h1>
-            <div class="search-container">
-                <input 
-                    type="search" 
-                    id="search-input" 
-                    placeholder="Buscar nos relatos..." 
-                    aria-label="Campo de busca"
-                    autocomplete="off"
-                >
-                <button id="search-button" aria-label="Buscar">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
-            </div>
+    <main class="home">
+        <header class="home-header">
+            <p class="eyebrow">Bem-vindo, viajante</p>
+            <h1>Pages Revealed</h1>
+            <p class="lead">Três caminhos. Escolha um.</p>
         </header>
 
-        <!-- Progress Bar -->
-        <div class="progress-container">
-            <div class="progress-bar">
-                <div id="progress-fill" class="progress-fill"></div>
-            </div>
-            <div id="progress-text" class="progress-text">Página 1 de 1</div>
-        </div>
-
-        <!-- Sidebar / Table of Contents -->
-        <aside id="sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <h2>Índice</h2>
-                <button id="sidebar-close" class="sidebar-close" aria-label="Fechar menu">&times;</button>
-            </div>
-            <nav id="toc-nav" class="toc-nav" aria-label="Índice de capítulos">
-                <!-- TOC will be injected here -->
-            </nav>
-        </aside>
-
-        <!-- Sidebar Overlay -->
-        <div id="sidebar-overlay" class="sidebar-overlay"></div>
-
-        <!-- Main Content Area -->
-        <main class="book-content">
-            <div id="page-content" class="page-content">
-                <!-- Content will be injected here -->
-            </div>
-
-            <!-- Navigation Buttons -->
-            <nav class="page-navigation" aria-label="Navegação de páginas">
-                <button id="prev-page" class="nav-button nav-prev" aria-label="Página anterior">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span>Anterior</span>
-                </button>
-                <button id="next-page" class="nav-button nav-next" aria-label="Próxima página">
-                    <span>Próxima</span>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-            </nav>
-        </main>
-
-        <!-- Search Results Modal -->
-        <div id="search-modal" class="search-modal hidden">
-            <div class="search-modal-content">
-                <div class="search-modal-header">
-                    <h2>Resultados da Busca</h2>
-                    <button id="search-close" class="search-close" aria-label="Fechar busca">&times;</button>
+        <nav class="portals" aria-label="Escolha uma experiência">
+            <!-- 1. Gandalf -->
+            <a class="portal portal-wizard" href="pages/gandalf.html" aria-label="Entrar na batalha do mago">
+                <div class="art art-wizard">
+                    <div class="wizard-glow"></div>
+                    <img src="assets/img/gandalf.png" alt="" width="505" height="680">
+                    <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span>
                 </div>
-                <div id="search-results" class="search-results">
-                    <!-- Results will be injected here -->
-                </div>
-            </div>
-        </div>
-    </div>
+                <div class="text"><h2>O Mago</h2><p>Veja o guardião afastar o dragão, uma rajada de cada vez.</p></div>
+            </a>
 
-    <!-- JavaScript -->
-    <script src="assets/script.js"></script>
+            <!-- 2. Livro -->
+            <a class="portal portal-book" href="pages/livro.html" aria-label="Abrir o livro antigo">
+                <div class="art art-book">
+                    <svg viewBox="0 0 240 240" role="img" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="leather" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0" stop-color="#8a4a26"/>
+                                <stop offset="0.55" stop-color="#5e2f17"/>
+                                <stop offset="1" stop-color="#3d1c0d"/>
+                            </linearGradient>
+                            <linearGradient id="pages" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#f6ecd0"/>
+                                <stop offset="1" stop-color="#d9c79a"/>
+                            </linearGradient>
+                            <radialGradient id="bookglow" cx="0.5" cy="0.55" r="0.55">
+                                <stop offset="0" stop-color="#ffd27a" stop-opacity="0.5"/>
+                                <stop offset="1" stop-color="#ffd27a" stop-opacity="0"/>
+                            </radialGradient>
+                        </defs>
+                        <ellipse cx="120" cy="130" rx="115" ry="95" fill="url(#bookglow)"/>
+                        <ellipse cx="120" cy="214" rx="84" ry="9" fill="#000" opacity="0.45"/>
+                        <!-- páginas (lateral) -->
+                        <rect x="52" y="42" width="140" height="166" rx="5" fill="url(#pages)"/>
+                        <g stroke="#b9a676" stroke-width="1" opacity="0.7">
+                            <line x1="58" y1="196" x2="190" y2="196"/><line x1="58" y1="200" x2="190" y2="200"/>
+                            <line x1="58" y1="204" x2="190" y2="204"/>
+                        </g>
+                        <!-- capa -->
+                        <g class="cover">
+                            <rect x="44" y="30" width="144" height="170" rx="8" fill="url(#leather)" stroke="#2a1208" stroke-width="2"/>
+                            <rect x="44" y="30" width="16" height="170" rx="6" fill="#2f1409" opacity="0.7"/>
+                            <rect x="70" y="44" width="106" height="142" rx="4" fill="none" stroke="#e6b955" stroke-width="2"/>
+                            <rect x="75" y="49" width="96" height="132" rx="3" fill="none" stroke="#e6b955" stroke-width="0.8" opacity="0.8"/>
+                            <!-- ornamento -->
+                            <g fill="none" stroke="#f3d58c" stroke-width="2" stroke-linecap="round">
+                                <circle cx="123" cy="100" r="24"/>
+                                <circle cx="123" cy="100" r="15" stroke-width="1.2"/>
+                                <path d="M123 70 L123 130 M93 100 L153 100 M102 79 L144 121 M144 79 L102 121" stroke-width="1" opacity="0.85"/>
+                                <path d="M92 150 H154" /><path d="M100 160 H146" stroke-width="1.2"/>
+                            </g>
+                            <circle cx="123" cy="100" r="4" fill="#f3d58c"/>
+                            <!-- cantoneiras -->
+                            <g fill="#e6b955">
+                                <path d="M70 44 h14 l-14 14z"/><path d="M176 44 h-14 l14 14z"/>
+                                <path d="M70 186 h14 l-14 -14z"/><path d="M176 186 h-14 l14 -14z"/>
+                            </g>
+                            <!-- fecho -->
+                            <rect x="182" y="102" width="12" height="30" rx="3" fill="#e6b955" stroke="#8a6a1f"/>
+                            <circle cx="188" cy="117" r="2.5" fill="#5e2f17"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="text"><h2>O Livro</h2><p>Abra o dossiê e leia página por página.</p></div>
+            </a>
+
+            <!-- 3. Galáxia -->
+            <a class="portal portal-galaxy" href="pages/galaxia.html" aria-label="Contemplar a galáxia">
+                <div class="art art-galaxy">
+                    <canvas id="mini-galaxy" width="480" height="480" aria-hidden="true"></canvas>
+                </div>
+                <div class="text"><h2>A Galáxia</h2><p>Uma estrela nova a cada mês. Um planeta a cada ano.</p></div>
+            </a>
+        </nav>
+
+        <footer class="home-footer">Toque em uma arte para entrar</footer>
+    </main>
+
+    <script src="assets/js/home.js"></script>
 </body>
 </html>
