@@ -1,9 +1,13 @@
 version: 2
 updates:
+  # Actions do pipeline (upload-pages-artifact e deploy-pages andam juntas): um PR só
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
   - package-ecosystem: npm
     directory: /
     schedule:

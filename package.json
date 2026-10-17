@@ -5,7 +5,9 @@
   "description": "Site estático (HTML, CSS e JS puro) com três experiências: mago x dragão, livro e galáxia do tempo.",
   "license": "MIT",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "serve": "node scripts/serve.mjs",
     "lint": "npm run lint:html && npm run lint:css && npm run lint:js",
@@ -18,11 +20,11 @@
     "test": "npm run lint && npm run check"
   },
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
-    "eslint": "^9.17.0",
-    "globals": "^15.14.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
     "htmlhint": "^1.1.4",
-    "stylelint": "^16.12.0",
-    "stylelint-config-standard": "^36.0.1"
+    "stylelint": "^17.16.0",
+    "stylelint-config-standard": "^40.0.0"
   }
 }
