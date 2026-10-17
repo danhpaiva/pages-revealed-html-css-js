@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # O build só copia arquivos (sem dependências), então não precisa de npm install.
       - name: Gerar dist/
