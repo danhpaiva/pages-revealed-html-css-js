@@ -1,14 +1,124 @@
-<!DOCTYPE html>
-<html lang="en">
-
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta name="description" content="Pages Revealed - Dossiê Digital Interativo de Preservação Emocional">
+    <title>Pages Revealed | Dossiê Digital</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Marked.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="assets/style.css">
 </head>
-
 <body>
+    <!-- Loading Indicator -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Carregando dossiê...</p>
+    </div>
 
+    <!-- Error Message -->
+    <div id="error-message" class="error-message hidden">
+        <div class="error-content">
+            <h2>⚠️ Erro ao Carregar</h2>
+            <p id="error-text"></p>
+            <button id="retry-button" class="btn-primary">Tentar Novamente</button>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="app-container hidden">
+        <!-- Header -->
+        <header class="book-header">
+            <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <h1 class="book-title">Pages Revealed</h1>
+            <div class="search-container">
+                <input 
+                    type="search" 
+                    id="search-input" 
+                    placeholder="Buscar nos relatos..." 
+                    aria-label="Campo de busca"
+                    autocomplete="off"
+                >
+                <button id="search-button" aria-label="Buscar">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <div id="progress-text" class="progress-text">Página 1 de 1</div>
+        </div>
+
+        <!-- Sidebar / Table of Contents -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h2>Índice</h2>
+                <button id="sidebar-close" class="sidebar-close" aria-label="Fechar menu">&times;</button>
+            </div>
+            <nav id="toc-nav" class="toc-nav" aria-label="Índice de capítulos">
+                <!-- TOC will be injected here -->
+            </nav>
+        </aside>
+
+        <!-- Sidebar Overlay -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Main Content Area -->
+        <main class="book-content">
+            <div id="page-content" class="page-content">
+                <!-- Content will be injected here -->
+            </div>
+
+            <!-- Navigation Buttons -->
+            <nav class="page-navigation" aria-label="Navegação de páginas">
+                <button id="prev-page" class="nav-button nav-prev" aria-label="Página anterior">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Anterior</span>
+                </button>
+                <button id="next-page" class="nav-button nav-next" aria-label="Próxima página">
+                    <span>Próxima</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </nav>
+        </main>
+
+        <!-- Search Results Modal -->
+        <div id="search-modal" class="search-modal hidden">
+            <div class="search-modal-content">
+                <div class="search-modal-header">
+                    <h2>Resultados da Busca</h2>
+                    <button id="search-close" class="search-close" aria-label="Fechar busca">&times;</button>
+                </div>
+                <div id="search-results" class="search-results">
+                    <!-- Results will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="assets/script.js"></script>
 </body>
-
 </html>
