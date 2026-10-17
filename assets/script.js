@@ -11,6 +11,7 @@ const CONFIG = {
     STORAGE_KEY: 'pagesRevealed_lastPage',
     FETCH_TIMEOUT: 10000,
     TRANSITION_DURATION: 300,
+    CELEBRATION_PAGE_INDEX: 3, // Page 3 (0-indexed, so page 4 in display)
 };
 
 // ============================================
@@ -21,6 +22,7 @@ const state = {
     currentPageIndex: 0,
     markdownContent: '',
     searchTerm: '',
+    celebrationMode: false,
 };
 
 // ============================================
@@ -161,7 +163,7 @@ function parseMarkdown(markdown) {
     const lines = markdown.split('\n');
     const chapters = [];
     let currentChapter = null;
-    let coverPage = { title: 'Capa', content: [], iscover: true };
+    let coverPage = { title: 'Capa', content: [], isCover: true };
 
     lines.forEach((line, index) => {
         // Check for H1 (Cover page)
@@ -279,6 +281,11 @@ function renderCurrentPage() {
 
     elements.pageContent.innerHTML = html;
 
+    // Add celebration button on page 3
+    if (state.currentPageIndex === CONFIG.CELEBRATION_PAGE_INDEX) {
+        addCelebrationButton();
+    }
+
     // Update navigation buttons
     updateNavigationButtons();
 
@@ -293,6 +300,109 @@ function renderCurrentPage() {
 
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function addCelebrationButton() {
+    // Check if button already exists
+    if (document.querySelector('.celebration-button')) return;
+
+    const button = document.createElement('button');
+    button.className = 'celebration-button';
+    button.textContent = 'Celebrar Liberdade';
+    button.setAttribute('aria-label', 'Ativar modo de comemoração');
+    
+    button.addEventListener('click', activateCelebrationMode);
+
+    // Insert button after the first paragraph or at the end
+    const firstParagraph = elements.pageContent.querySelector('p');
+    if (firstParagraph) {
+        firstParagraph.parentNode.insertBefore(button, firstParagraph.nextSibling);
+    } else {
+        elements.pageContent.appendChild(button);
+    }
+}
+
+function activateCelebrationMode() {
+    if (state.celebrationMode) return;
+
+    state.celebrationMode = true;
+    document.body.classList.add('celebration-mode');
+
+    // Create confetti
+    createConfetti();
+
+    // Play celebration sound (optional - commented out as it requires audio file)
+    // playCelebrationSound();
+
+    // Show celebration message
+    showCelebrationMessage();
+
+    // Remove the button after activation
+    const button = document.querySelector('.celebration-button');
+    if (button) {
+        button.style.transform = 'scale(0)';
+        button.style.opacity = '0';
+        setTimeout(() => button.remove(), 300);
+    }
+}
+
+function createConfetti() {
+    const colors = ['#3E87FF', '#0789D7', '#6CADC1', '#D5A75C', '#C5E3F0'];
+    const confettiCount = 100;
+
+    for (let i = 0; i < confettiCount; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+            
+            document.body.appendChild(confetti);
+
+            // Remove confetti after animation
+            setTimeout(() => confetti.remove(), 4000);
+        }, i * 30);
+    }
+}
+
+function showCelebrationMessage() {
+    // Create a temporary message overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #0789D7, #3E87FF);
+        color: white;
+        padding: 2rem 3rem;
+        border-radius: 12px;
+        font-family: var(--font-sans);
+        font-size: 1.5rem;
+        font-weight: 600;
+        z-index: 10001;
+        box-shadow: 0 8px 32px rgba(62, 135, 255, 0.5);
+        text-align: center;
+        animation: fadeIn 0.5s ease-in-out;
+    `;
+    overlay.innerHTML = `
+        🎉 Parabéns! 🎉<br>
+        <span style="font-size: 1.2rem; font-weight: 400; margin-top: 0.5rem; display: block;">
+            Você merece toda a paz e liberdade!
+        </span>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Remove message after 4 seconds
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        overlay.style.transform = 'translate(-50%, -50%) scale(0.8)';
+        overlay.style.transition = 'all 0.5s ease-in-out';
+        setTimeout(() => overlay.remove(), 500);
+    }, 4000);
 }
 
 function updateNavigationButtons() {
@@ -326,8 +436,20 @@ function updateProgress() {
 function navigateToPage(index) {
     if (index < 0 || index >= state.chapters.length) return;
 
+    // Reset celebration mode when navigating away
+    if (state.currentPageIndex === CONFIG.CELEBRATION_PAGE_INDEX && index !== CONFIG.CELEBRATION_PAGE_INDEX) {
+        deactivateCelebrationMode();
+    }
+
     state.currentPageIndex = index;
     renderCurrentPage();
+}
+
+function deactivateCelebrationMode() {
+    if (!state.celebrationMode) return;
+    
+    state.celebrationMode = false;
+    document.body.classList.remove('celebration-mode');
 }
 
 function navigatePrevious() {
