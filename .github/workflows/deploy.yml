@@ -1,38 +1,62 @@
-﻿name: Deploy to GitHub Pages
+name: Deploy
 
+# Entrega contínua: publica no GitHub Pages quando algo do site muda na main.
+# Fluxo: CI (reutilizado) -> build (só os arquivos públicos) -> deploy.
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - index.html
+      - pages/**
+      - assets/**
+      - content/**
+      - scripts/build.mjs
+      - package.json
+      - package-lock.json
+      - .github/workflows/deploy.yml
+      - .github/workflows/ci.yml
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      # O build só copia arquivos (sem dependências), então não precisa de npm install.
+      - name: Gerar dist/
+        run: node scripts/build.mjs
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
   deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4

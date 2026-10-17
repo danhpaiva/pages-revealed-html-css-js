@@ -1,0 +1,27 @@
+{
+  "name": "pages-revealed",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Site estático (HTML, CSS e JS puro) com três experiências: mago x dragão, livro e galáxia do tempo.",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "serve": "node scripts/serve.mjs",
+    "lint": "npm run lint:html && npm run lint:css && npm run lint:js",
+    "lint:html": "htmlhint \"index.html\" \"pages/*.html\"",
+    "lint:css": "stylelint \"assets/css/*.css\"",
+    "lint:js": "eslint assets/js scripts",
+    "check": "node scripts/check-site.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "npm run lint && npm run check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
+    "htmlhint": "^1.1.4",
+    "stylelint": "^16.12.0",
+    "stylelint-config-standard": "^36.0.1"
+  }
+}

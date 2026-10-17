@@ -1,0 +1,45 @@
+name: CI
+
+# Integração contínua: valida o código sem publicar nada.
+# Roda em PRs, em pushes na develop e é reutilizado pelo deploy (workflow_call).
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [develop]
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Lint HTML, script: lint:html }
+          - { name: Lint CSS, script: lint:css }
+          - { name: Lint JS, script: lint:js }
+          - { name: Integridade dos arquivos, script: check }
+          - { name: Build, script: build }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci --no-audit --no-fund
+
+      - name: ${{ matrix.name }}
+        run: npm run ${{ matrix.script }}

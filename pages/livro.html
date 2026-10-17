@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Pages Revealed - o dossiê em formato de livro, página por página.">
+    <title>O Livro | Pages Revealed</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <link rel="stylesheet" href="../assets/css/livro.css">
+</head>
+<body class="library">
+    <a class="back-btn" href="../index.html" aria-label="Voltar para a página inicial">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Início
+    </a>
+
+    <div class="tools" id="tools">
+        <button type="button" id="font-down" aria-label="Diminuir a letra">A&minus;</button>
+        <button type="button" id="font-up" aria-label="Aumentar a letra">A+</button>
+        <button type="button" id="open-index" aria-label="Abrir índice e busca">&#9776; Índice</button>
+    </div>
+
+    <main class="desk">
+        <!-- Livro fechado (capa) -->
+        <button type="button" class="closed-book" id="closed-book" aria-label="Abrir o livro">
+            <span class="closed-leather">
+                <span class="closed-frame">
+                    <span class="closed-ornament">&#10070;</span>
+                    <span class="closed-title">Dossiê de Preservação Emocional e Clareza Mental</span>
+                    <span class="closed-rule"></span>
+                    <span class="closed-sub">Pages Revealed</span>
+                </span>
+            </span>
+            <span class="closed-hint">Toque para abrir</span>
+        </button>
+
+        <!-- Livro aberto -->
+        <section class="book hidden" id="book" aria-label="Livro">
+            <div class="pages">
+                <article class="page page-left" id="page-left">
+                    <div class="page-inner" id="inner-left"></div>
+                    <footer class="page-foot"><span class="pnum" id="num-left"></span><span class="runhead">Pages Revealed</span></footer>
+                </article>
+                <article class="page page-right" id="page-right">
+                    <div class="page-inner" id="inner-right"></div>
+                    <footer class="page-foot"><span class="runhead" id="head-right"></span><span class="pnum" id="num-right"></span></footer>
+                </article>
+                <div class="spine" aria-hidden="true"></div>
+            </div>
+        </section>
+
+        <nav class="controls hidden" id="controls" aria-label="Navegação do livro">
+            <button type="button" class="turn" id="prev" aria-label="Página anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                <span>Anterior</span>
+            </button>
+            <div class="status">
+                <span id="status-text">Página 1 de 1</span>
+                <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
+            </div>
+            <button type="button" class="turn" id="next" aria-label="Próxima página">
+                <span>Próxima</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+        </nav>
+
+        <p class="loading" id="loading">Carregando o livro...</p>
+        <div class="error hidden" id="error">
+            <p id="error-text"></p>
+            <button type="button" id="retry">Tentar novamente</button>
+        </div>
+    </main>
+
+    <!-- Índice + busca -->
+    <div class="scrim" id="scrim"></div>
+    <aside class="drawer" id="drawer" aria-label="Índice e busca" aria-hidden="true">
+        <div class="drawer-head">
+            <h2>Índice</h2>
+            <button type="button" id="close-index" aria-label="Fechar índice">&times;</button>
+        </div>
+        <form class="search" id="search-form" role="search">
+            <input type="search" id="search-input" placeholder="Buscar no livro..." aria-label="Buscar no livro" autocomplete="off">
+            <button type="submit">Buscar</button>
+        </form>
+        <div class="drawer-body" id="drawer-body"></div>
+    </aside>
+
+    <script src="../assets/js/livro.js"></script>
+</body>
+</html>

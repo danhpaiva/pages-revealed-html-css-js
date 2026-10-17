@@ -1,0 +1,62 @@
+/* Estilos compartilhados por todas as páginas */
+:root {
+    --bg-deep: #0b0a14;
+    --bg-night: #14122a;
+    --ink: #f4ecd8;
+    --ink-soft: #cfc4aa;
+    --gold: #e6b955;
+    --gold-soft: #f3d58c;
+    --arcane: #7fd4ff;
+    --font-title: 'Cinzel', 'Times New Roman', serif;
+    --font-body: 'Lora', Georgia, serif;
+    --font-ui: 'Inter', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; min-height: 100%; }
+
+body {
+    background: var(--bg-deep);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+}
+
+.hidden { display: none !important; }
+
+.back-btn {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    left: max(12px, env(safe-area-inset-left));
+    z-index: 100;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    min-height: 44px;
+    border-radius: 999px;
+    border: 1px solid rgba(230, 185, 85, 0.6);
+    background: rgba(11, 10, 20, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--gold-soft);
+    font: 600 0.9rem var(--font-ui);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.back-btn:hover, .back-btn:focus-visible {
+    background: rgba(230, 185, 85, 0.22);
+    transform: translateX(-2px);
+    outline: none;
+}
+
+.back-btn svg { width: 18px; height: 18px; }
+
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
