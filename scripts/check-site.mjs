@@ -64,6 +64,17 @@ for (const file of (await walk('assets')).filter((f) => /\.(css|js)$/.test(f))) 
     if (!used.has(file)) errors.push(`arquivo sem uso: ${file}`);
 }
 
+// Proteção do livro: nenhum texto em claro em content/ e pacote criptografado válido
+for (const file of await walk('content')) {
+    if (/\.(md|txt)$/i.test(file)) errors.push(`texto em claro em pasta pública: ${file} (use private/ e npm run encrypt)`);
+}
+try {
+    const pkg = JSON.parse(await readFile('content/livro.enc.json', 'utf8'));
+    if (!(pkg.iter >= 600000) || !pkg.salt || !pkg.iv || !pkg.data) errors.push('content/livro.enc.json: pacote criptografado inválido ou com poucas iterações');
+} catch {
+    errors.push('content/livro.enc.json ausente ou ilegível (rode npm run encrypt)');
+}
+
 if (errors.length) {
     console.error(`\n${errors.length} problema(s):\n - ${errors.join('\n - ')}\n`);
     process.exit(1);

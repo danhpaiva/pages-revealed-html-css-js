@@ -1,7 +1,7 @@
 /* O Livro: lê o markdown e o divide em várias páginas que cabem na tela,
    exibidas como um livro aberto (duas páginas no desktop, uma no celular). */
 (function () {
-    const MARKDOWN_FILE = '../content/livro.md';
+    const ENCRYPTED_FILE = '../content/livro.enc.json';
     const STORAGE_KEY = 'pagesRevealed_book_v2';
     const SPREAD_MIN_WIDTH = 821;
 
@@ -15,6 +15,7 @@
         pages: document.querySelector('.pages'),
         drawer: $('drawer'), scrim: $('scrim'), drawerBody: $('drawer-body'),
         searchForm: $('search-form'), searchInput: $('search-input'),
+        lock: $('lock'), lockInput: $('lock-input'), lockButton: $('lock-button'), lockMsg: $('lock-msg'),
     };
 
     const S = {
@@ -387,35 +388,113 @@
         setTimeout(showBook, 850);
     }
 
+    // ---------------------------------------------------------
+    // Senha: o livro fica criptografado (AES-GCM, chave via PBKDF2) e só é
+    // decifrado aqui no navegador. Sem a senha o conteúdo não existe no site.
+    // ---------------------------------------------------------
+    const fromB64 = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const SESSION_KEY = 'pagesRevealed_session';
+
+    async function decryptBook(pkg, password) {
+        const enc = new TextEncoder();
+        const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+        const key = await crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt: fromB64(pkg.salt), iterations: pkg.iter, hash: 'SHA-256' },
+            base,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['decrypt'],
+        );
+        const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(pkg.iv) }, key, fromB64(pkg.data));
+        return new TextDecoder().decode(plain);
+    }
+
+    function showError(message) {
+        el.loading.classList.add('hidden');
+        el.lock.classList.add('hidden');
+        el.closed.classList.add('hidden');
+        document.body.classList.add('locked');
+        el.errorText.textContent = message;
+        el.error.classList.remove('hidden');
+    }
+
+    async function startBook(md, saved) {
+        if (typeof marked === 'undefined') throw new Error('Não foi possível carregar o leitor de Markdown (sem internet?).');
+        if (!md.trim()) throw new Error('O livro está vazio.');
+        S.source = buildBlocks(md);
+        S.blocks = S.source.slice();
+        // O título só aparece depois da senha: vem do primeiro # do texto decifrado
+        const h1 = S.source.find((b) => b.tag === 'h1');
+        $('closed-title').textContent = h1 ? h1.text.replace(/^\p{Extended_Pictographic}️?\s*/u, '') : '';
+        if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]);
+        el.loading.classList.add('hidden');
+        el.lock.classList.add('hidden');
+        document.body.classList.remove('locked');
+        if (saved.block > 0) {
+            // quem já estava lendo volta direto à página
+            el.book.classList.remove('hidden');
+            el.controls.classList.remove('hidden');
+            S.opened = true;
+            relayout();
+        } else {
+            el.closed.classList.remove('hidden');
+        }
+    }
+
     async function init() {
         const saved = load(STORAGE_KEY, {});
         if (saved.font) S.fontScale = saved.font;
 
+        let pkg;
         try {
-            if (typeof marked === 'undefined') throw new Error('Não foi possível carregar o leitor de Markdown (sem internet?).');
-            const res = await fetch(MARKDOWN_FILE);
+            if (!window.crypto || !crypto.subtle) throw new Error('Este navegador não permite abrir o livro (é preciso HTTPS).');
+            const res = await fetch(ENCRYPTED_FILE);
             if (!res.ok) throw new Error(`Erro ao carregar o livro (${res.status}).`);
-            const md = await res.text();
-            if (!md.trim()) throw new Error('O livro está vazio.');
-            S.source = buildBlocks(md);
-            S.blocks = S.source.slice();
-            if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]);
-            el.loading.classList.add('hidden');
-            if (saved.block > 0) {
-                // quem já estava lendo volta direto à página
-                el.closed.classList.add('hidden');
-                el.book.classList.remove('hidden');
-                el.controls.classList.remove('hidden');
-                S.opened = true;
-                relayout();
-            }
+            pkg = await res.json();
         } catch (err) {
-            el.loading.classList.add('hidden');
-            el.closed.classList.add('hidden');
-            el.errorText.textContent = err.message;
-            el.error.classList.remove('hidden');
+            showError(err.message);
             console.error(err);
+            return;
         }
+
+        const tryUnlock = async (password) => {
+            const md = await decryptBook(pkg, password);
+            try { sessionStorage.setItem(SESSION_KEY, password); } catch { /* ignore */ }
+            await startBook(md, saved);
+        };
+
+        // Mesma aba: não pede a senha de novo ao recarregar
+        let remembered = null;
+        try { remembered = sessionStorage.getItem(SESSION_KEY); } catch { /* ignore */ }
+        if (remembered) {
+            el.loading.classList.remove('hidden');
+            try { await tryUnlock(remembered); return; } catch { el.loading.classList.add('hidden'); }
+        }
+
+        el.lock.classList.remove('hidden');
+        el.lockInput.focus();
+        let failures = 0;
+        el.lock.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = el.lockInput.value;
+            if (!password || el.lockButton.disabled) return;
+            el.lockButton.disabled = true;
+            el.lockMsg.textContent = 'Abrindo...';
+            el.lock.classList.remove('shake');
+            try {
+                await tryUnlock(password);
+            } catch (err) {
+                if (err instanceof SyntaxError || (err && err.name !== 'OperationError')) { console.error(err); }
+                failures++;
+                el.lockMsg.textContent = 'Senha incorreta.';
+                el.lockInput.value = '';
+                el.lockInput.focus();
+                void el.lock.offsetWidth;
+                el.lock.classList.add('shake');
+                // pequena espera crescente entre tentativas
+                setTimeout(() => { el.lockButton.disabled = false; }, Math.min(1000 * failures, 8000));
+            }
+        });
     }
 
     // ---------------------------------------------------------

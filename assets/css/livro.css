@@ -420,3 +420,63 @@ body.library::before {
 @media (max-height: 560px) and (orientation: landscape) {
     .desk { padding-top: 56px; gap: 6px; }
 }
+
+/* ---------- Tela de senha ---------- */
+body.locked .tools { display: none; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.lock {
+    width: min(360px, calc(100vw - 32px));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px 26px 26px;
+    border-radius: 20px;
+    text-align: center;
+    background: linear-gradient(160deg, rgba(74, 37, 18, 0.95), rgba(32, 18, 10, 0.97));
+    border: 1px solid rgba(230, 185, 85, 0.55);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.65);
+}
+
+.lock-icon { font-size: 2.4rem; }
+.lock h1 { margin: 0; font: 700 1.4rem var(--font-title); letter-spacing: 0.06em; color: var(--gold-soft); }
+.lock p { margin: 0; color: var(--ink-soft); font: 400 0.95rem var(--font-ui); }
+
+.lock input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(230, 185, 85, 0.6);
+    background: #2a1a10;
+    color: var(--ink);
+    font: 500 1.1rem var(--font-ui);
+    text-align: center;
+    letter-spacing: 0.2em;
+}
+
+.lock input::placeholder { letter-spacing: 0.05em; color: #a99877; }
+
+.lock button {
+    width: 100%;
+    min-height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--gold);
+    color: #241405;
+    font: 700 1rem var(--font-ui);
+    cursor: pointer;
+}
+
+.lock button:disabled { opacity: 0.55; cursor: default; }
+.lock .lock-msg { min-height: 1.3em; color: #ffb3a0; font-weight: 500; }
+.lock.shake { animation: shake 0.4s; }
+
+@keyframes shake {
+    20% { transform: translateX(-10px); }
+    40% { transform: translateX(10px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+}

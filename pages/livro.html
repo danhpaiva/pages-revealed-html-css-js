@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Pages Revealed - o dossiê em formato de livro, página por página.">
+    <meta name="description" content="Pages Revealed - um livro para ler página por página.">
     <title>O Livro | Pages Revealed</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="../assets/css/base.css">
     <link rel="stylesheet" href="../assets/css/livro.css">
 </head>
-<body class="library">
+<body class="library locked">
     <a class="back-btn" href="../index.html" aria-label="Voltar para a página inicial">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         Início
@@ -25,12 +25,23 @@
     </div>
 
     <main class="desk">
+        <!-- Tela de senha -->
+        <form class="lock hidden" id="lock" autocomplete="off">
+            <span class="lock-icon" aria-hidden="true">&#128274;</span>
+            <h1>Livro protegido</h1>
+            <p>Digite a senha para abrir.</p>
+            <label class="sr-only" for="lock-input">Senha</label>
+            <input type="password" id="lock-input" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Senha">
+            <button type="submit" id="lock-button">Abrir</button>
+            <p class="lock-msg" id="lock-msg" role="alert"></p>
+        </form>
+
         <!-- Livro fechado (capa) -->
-        <button type="button" class="closed-book" id="closed-book" aria-label="Abrir o livro">
+        <button type="button" class="closed-book hidden" id="closed-book" aria-label="Abrir o livro">
             <span class="closed-leather">
                 <span class="closed-frame">
                     <span class="closed-ornament">&#10070;</span>
-                    <span class="closed-title">Dossiê de Preservação Emocional e Clareza Mental</span>
+                    <span class="closed-title" id="closed-title"></span>
                     <span class="closed-rule"></span>
                     <span class="closed-sub">Pages Revealed</span>
                 </span>
@@ -68,7 +79,7 @@
             </button>
         </nav>
 
-        <p class="loading" id="loading">Carregando o livro...</p>
+        <p class="loading hidden" id="loading">Abrindo o livro...</p>
         <div class="error hidden" id="error">
             <p id="error-text"></p>
             <button type="button" id="retry">Tentar novamente</button>
