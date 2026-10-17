@@ -2,6 +2,7 @@
    - A cada mês que passa, nasce uma estrela nova (formando uma constelação).
    - Quando o ano fecha (12 estrelas), elas se unem e viram um planeta.
    - A cada 5 anos, os 5 planetas entram em órbita de um sol e viram um sistema solar.
+   - A cada 10 anos, 2 sistemas solares se fundem numa galáxia espiral.
    - Só as estrelas do ano corrente e os planetas do ciclo atual ficam soltos; o
      resto vira sistemas pequenos, então a tela cresce em beleza sem ficar poluída. */
 (function () {
@@ -9,6 +10,7 @@
     const START_YEAR = 2026;
     const START_MONTH = 4;          // abril de 2026 = primeira estrela
     const YEARS_PER_SYSTEM = 5;     // a cada 5 planetas (anos) nasce um sistema solar
+    const SYSTEMS_PER_GALAXY = 2;   // a cada 2 sistemas (10 anos) nasce uma galáxia
     const FUTURE_MONTHS = 48;       // quanto o controle de tempo permite viajar adiante
     // ========================
 
@@ -61,6 +63,8 @@
     const planetsAt = (m) => Math.floor(m / 12);
     const starsAt = (m) => (m % 12) + 1;
     const systemsAt = (m) => Math.floor(planetsAt(m) / YEARS_PER_SYSTEM);
+    const galaxiesAt = (m) => Math.floor(systemsAt(m) / SYSTEMS_PER_GALAXY);
+    const MONTHS_PER_GALAXY = 12 * YEARS_PER_SYSTEM * SYSTEMS_PER_GALAXY;
 
     const state = {
         m: NOW,
@@ -88,6 +92,7 @@
         SKY_H = Math.max(260, H - panel.getBoundingClientRect().height - 20);
         U = clamp(Math.min(W, SKY_H) / 650, 0.6, 1.25);
         planetSprites.clear();
+        galaxySprites.clear();
         buildDust();
     }
 
@@ -263,11 +268,10 @@
         return { hue: SUN_HUES[n % SUN_HUES.length], tilt: -0.35 + r() * 0.7, phase: Array.from({ length: YEARS_PER_SYSTEM }, () => r() * TAU) };
     }
 
-    function systemPos(n, count) {
-        const col = n % 6, row = Math.floor(n / 6);
-        const shrink = Math.max(0.6, 1 - 0.05 * (count - 1));
-        const R = Math.max(28, Math.min(W, SKY_H) * 0.1 * shrink * (W / SKY_H < 0.85 ? 0.9 : 1));
-        return { x: W * (0.91 - 0.82 * (col / 5)), y: SKY_H * (0.085 + row * 0.1), R };
+    function systemPos(n) {
+        const col = n % SYSTEMS_PER_GALAXY;
+        const R = Math.max(28, Math.min(W, SKY_H) * 0.1 * (W / SKY_H < 0.85 ? 0.9 : 1));
+        return { x: W * (0.91 - 0.164 * col), y: SKY_H * 0.085, R };
     }
 
     function drawSystem(n, x, y, R, now, alpha, form) {
@@ -306,6 +310,68 @@
         core.addColorStop(1, `hsla(${info.hue}, 100%, 60%, 0)`);
         ctx.fillStyle = core;
         ctx.beginPath(); ctx.arc(0, 0, cr, 0, TAU); ctx.fill();
+        ctx.restore();
+    }
+
+    // ---------------------------------------------------------
+    // Galáxias (a cada 10 anos)
+    // ---------------------------------------------------------
+    const galaxySprites = new Map();
+
+    function galaxyInfo(g) {
+        const r = rng(6600 + g * 41);
+        return { arms: 2 + (g % 2), shift: [0, 40, -50, 90][g % 4], tilt: -0.6 + r() * 1.2, dir: g % 2 ? -1 : 1, phase: r() * TAU, seed: 300 + g * 17 };
+    }
+
+    function galaxyPos(g) {
+        const row = Math.floor(g / 5), col = g % 5;
+        return { x: W * (0.36 + 0.11 * col), y: SKY_H * (0.12 + row * 0.12), R: Math.max(30, Math.min(W, SKY_H) * 0.085) };
+    }
+
+    function galaxySprite(g, R) {
+        const key = `${g}:${Math.round(R)}:${dpr}`;
+        if (galaxySprites.has(key)) return galaxySprites.get(key);
+        const info = galaxyInfo(g);
+        const S = Math.ceil(R * 3.2);
+        const c = document.createElement('canvas');
+        c.width = S * dpr; c.height = S * dpr;
+        const x = c.getContext('2d');
+        x.scale(dpr, dpr);
+        const cx = S / 2, Rg = R * 1.25;
+        const glow = x.createRadialGradient(cx, cx, 0, cx, cx, Rg);
+        glow.addColorStop(0, `hsla(${40 + info.shift}, 100%, 78%, 0.95)`);
+        glow.addColorStop(0.14, `hsla(${35 + info.shift}, 100%, 62%, 0.5)`);
+        glow.addColorStop(0.5, `hsla(${270 + info.shift}, 80%, 55%, 0.2)`);
+        glow.addColorStop(1, 'hsla(220, 80%, 50%, 0)');
+        x.fillStyle = glow;
+        x.fillRect(0, 0, S, S);
+        const r = rng(info.seed);
+        for (let i = 0; i < 850; i++) {
+            const dist = Math.pow(r(), 0.7);
+            const arm = Math.floor(r() * info.arms);
+            const ang = dist * 4.8 + (arm / info.arms) * TAU + (r() - 0.5) * (0.9 - dist * 0.5);
+            const hue = (dist < 0.25 ? 42 : dist < 0.6 ? 270 : 205) + info.shift;
+            x.fillStyle = `hsla(${hue}, 90%, ${72 + r() * 22}%, ${0.95 - dist * 0.4})`;
+            x.beginPath();
+            x.arc(cx + Math.cos(ang) * dist * Rg, cx + Math.sin(ang) * dist * Rg, (0.5 + r() * 1.2) * Math.max(0.7, R / 40), 0, TAU);
+            x.fill();
+        }
+        const out = { c, S };
+        galaxySprites.set(key, out);
+        return out;
+    }
+
+    function drawGalaxy(g, x, y, R, now, alpha, scale) {
+        const info = galaxyInfo(g);
+        const spr = galaxySprite(g, R);
+        const s = spr.S * scale;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(x, y);
+        ctx.rotate(info.tilt);
+        ctx.scale(1, 0.62);
+        ctx.rotate(info.dir * now / 22000 + info.phase);
+        ctx.drawImage(spr.c, -s / 2, -s / 2, s, s);
         ctx.restore();
     }
 
@@ -447,11 +513,22 @@
         const systems = systemsAt(m);
         const merging = state.merge;
         const sysMerging = merging && merging.kind === 'system' ? merging.sys : -1;
+        const galaxies = galaxiesAt(m);
+        const galMerging = merging && merging.kind === 'galaxy' ? merging.gal : -1;
 
-        // sistemas solares já formados
-        for (let n = 0; n < systems; n++) {
+        // galáxias já formadas
+        for (let g = 0; g < galaxies; g++) {
+            if (g === galMerging) continue;
+            const gp = galaxyPos(g);
+            drawGalaxy(g, gp.x, gp.y, gp.R, now, 1, 1);
+            const a = monthLabel(g * MONTHS_PER_GALAXY), b = monthLabel((g + 1) * MONTHS_PER_GALAXY - 1);
+            hitTargets.push({ x: gp.x, y: gp.y, r: gp.R * 1.2, label: `Galáxia ${g + 1} · ${a.short}/${a.year} – ${b.short}/${b.year}` });
+        }
+
+        // sistemas solares ainda não reunidos em galáxia
+        for (let n = galaxies * SYSTEMS_PER_GALAXY; n < systems; n++) {
             if (n === sysMerging) continue;
-            const sp = systemPos(n, systems);
+            const sp = systemPos(n);
             drawSystem(n, sp.x, sp.y, sp.R, now, 1, 1);
             const a = monthLabel(n * YEARS_PER_SYSTEM * 12), b = monthLabel((n + 1) * YEARS_PER_SYSTEM * 12 - 1);
             hitTargets.push({ x: sp.x, y: sp.y, r: sp.R * 1.1, label: `Sistema solar ${n + 1} · ${a.short}/${a.year} – ${b.short}/${b.year}` });
@@ -530,7 +607,7 @@
 
     // 5 planetas giram em torno do centro e acendem um sol (u de 0 a 1)
     function drawSystemFormation(now, mg, u) {
-        const c = systemPos(mg.sys, mg.sys + 1);
+        const c = systemPos(mg.sys);
         const e = easeInOut(u);
         const ang = e * 3.6;
         for (let j = 0; j < YEARS_PER_SYSTEM; j++) {
@@ -554,9 +631,46 @@
         if (form > 0) drawSystem(mg.sys, c.x, c.y, c.R, now, form, form);
     }
 
+    // 2 sistemas solares giram até o ponto da galáxia, que se acende (u de 0 a 1)
+    function drawGalaxyFormation(now, mg, u) {
+        const gp = galaxyPos(mg.gal);
+        const e = easeInOut(clamp(u / 0.75, 0, 1));
+        const ang = e * 3.4;
+        for (const n of [mg.sys - 1, mg.sys]) {
+            const start = systemPos(n);
+            const dx = start.x - gp.x, dy = start.y - gp.y;
+            const f = 1 - e;
+            const x = gp.x + (dx * Math.cos(ang) - dy * Math.sin(ang)) * f;
+            const y = gp.y + (dx * Math.sin(ang) + dy * Math.cos(ang)) * f;
+            drawSystem(n, x, y, start.R * (1 - 0.7 * e), now, 1 - clamp((u - 0.68) / 0.3, 0, 1), 1);
+        }
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const gr = gp.R * (1 + 3.5 * Math.sin(Math.PI * clamp(u * 1.05, 0, 1)));
+        const gl = ctx.createRadialGradient(gp.x, gp.y, 0, gp.x, gp.y, gr);
+        gl.addColorStop(0, `rgba(210, 190, 255, ${0.8 * Math.sin(Math.PI * clamp(u * 0.95, 0, 1))})`);
+        gl.addColorStop(1, 'rgba(210, 190, 255, 0)');
+        ctx.fillStyle = gl;
+        ctx.fillRect(gp.x - gr, gp.y - gr, gr * 2, gr * 2);
+        ctx.restore();
+        const form = easeOut(clamp((u - 0.4) / 0.6, 0, 1));
+        if (form > 0) drawGalaxy(mg.gal, gp.x, gp.y, gp.R, now, form, 0.3 + 0.7 * form);
+    }
+
     function drawMerge(now, mg) {
         const u = clamp((now - mg.t0) / mg.dur, 0, 1);
-        if (mg.kind === 'system') {
+        if (mg.kind === 'galaxy') {
+            // fase 1: estrelas viram o planeta; fase 2: 5 planetas viram o 2º sistema; fase 3: 2 sistemas viram galáxia
+            const first = systemPos(mg.sys - 1);
+            if (u < 0.56) drawSystem(mg.sys - 1, first.x, first.y, first.R, now, 1, 1);
+            if (u < 0.26) {
+                for (let j = 0; j < YEARS_PER_SYSTEM - 1; j++) drawPlanet(planetInfo(mg.sys * YEARS_PER_SYSTEM + j), now);
+                drawStarFusion(now, mg.cycle, u / 0.24);
+            } else if (u < 0.56) drawSystemFormation(now, mg, (u - 0.26) / 0.3);
+            else {
+                drawGalaxyFormation(now, mg, (u - 0.56) / 0.44);
+            }
+        } else if (mg.kind === 'system') {
             // fase 1: estrelas viram o 5º planeta; fase 2: os 5 planetas viram um sistema
             if (u < 0.5) {
                 for (let j = 0; j < YEARS_PER_SYSTEM - 1; j++) drawPlanet(planetInfo(mg.sys * YEARS_PER_SYSTEM + j), now);
@@ -574,22 +688,25 @@
     function updateHud(announce) {
         const m = state.m;
         const lb = monthLabel(m);
-        const planets = planetsAt(m), stars = starsAt(m), systems = systemsAt(m);
+        const planets = planetsAt(m), stars = starsAt(m), systems = systemsAt(m), galaxies = galaxiesAt(m);
         $('when').textContent = `${lb.name} de ${lb.year}`;
         const sp = (n, one, many) => `${n} ${n === 1 ? one : many}`;
         $('count').textContent = `${sp(stars, 'estrela', 'estrelas')} no ano · ${sp(planets, 'planeta', 'planetas')}`
-            + (systems ? ` · ${sp(systems, 'sistema solar', 'sistemas solares')}` : '');
+            + (systems ? ` · ${sp(systems, 'sistema solar', 'sistemas solares')}` : '')
+            + (galaxies ? ` · ${sp(galaxies, 'galáxia', 'galáxias')}` : '');
         slider.value = m;
         slider.style.setProperty('--fill', `${(m / MAX) * 100}%`);
         const hint = $('hint');
         const lastOfCycle = planets % YEARS_PER_SYSTEM === YEARS_PER_SYSTEM - 1;
-        if (m > 0 && m % (12 * YEARS_PER_SYSTEM) === 0) hint.textContent = `Marco de ${YEARS_PER_SYSTEM} anos: os planetas viraram um sistema solar!`;
+        if (m > 0 && m % MONTHS_PER_GALAXY === 0) hint.textContent = `Marco de ${YEARS_PER_SYSTEM * SYSTEMS_PER_GALAXY} anos: dois sistemas solares viraram uma galáxia!`;
+        else if (m > 0 && m % (12 * YEARS_PER_SYSTEM) === 0) hint.textContent = `Marco de ${YEARS_PER_SYSTEM} anos: os planetas viraram um sistema solar!`;
         else if (m > NOW) hint.textContent = 'Você está vendo o futuro da galáxia.';
+        else if (stars === 12 && lastOfCycle && systems % SYSTEMS_PER_GALAXY === SYSTEMS_PER_GALAXY - 1) hint.textContent = 'No próximo mês nasce um sistema solar e os 2 sistemas se unem numa galáxia!';
         else if (stars === 12 && lastOfCycle) hint.textContent = 'No próximo mês, as 12 estrelas viram um planeta e os 5 planetas formam um sistema solar!';
         else if (stars === 12) hint.textContent = 'No próximo mês, as 12 estrelas vão se unir e virar um planeta.';
-        else if (m === NOW) hint.textContent = 'Toque numa estrela ou planeta para ver sua data.';
+        else if (m === NOW) hint.textContent = 'Toque numa estrela, planeta, sistema ou galáxia para ver a data.';
         else hint.textContent = '';
-        canvas.setAttribute('aria-label', `Céu em ${lb.name} de ${lb.year}: ${sp(stars, 'estrela', 'estrelas')} no ano, ${sp(planets, 'planeta formado', 'planetas formados')} e ${sp(systems, 'sistema solar', 'sistemas solares')}`);
+        canvas.setAttribute('aria-label', `Céu em ${lb.name} de ${lb.year}: ${sp(stars, 'estrela', 'estrelas')} no ano, ${sp(planets, 'planeta formado', 'planetas formados')} , ${sp(systems, 'sistema solar', 'sistemas solares')} e ${sp(galaxies, 'galáxia', 'galáxias')}`);
     }
 
     function setMonth(m, animate) {
@@ -601,7 +718,12 @@
         if (animate && !reduceMotion && next === old + 1) {
             if (planetsAt(next) === planetsAt(old) + 1) {
                 const isSystem = planetsAt(next) % YEARS_PER_SYSTEM === 0;
-                state.merge = { t0: t, dur: isSystem ? 6400 : 2600, cycle: planetsAt(old), kind: isSystem ? 'system' : 'planet', sys: planetsAt(next) / YEARS_PER_SYSTEM - 1 };
+                const sysCount = planetsAt(next) / YEARS_PER_SYSTEM;
+                const isGalaxy = isSystem && sysCount % SYSTEMS_PER_GALAXY === 0;
+                state.merge = {
+                    t0: t, dur: isGalaxy ? 12500 : isSystem ? 6400 : 2600, cycle: planetsAt(old),
+                    kind: isGalaxy ? 'galaxy' : isSystem ? 'system' : 'planet', sys: sysCount - 1, gal: sysCount / SYSTEMS_PER_GALAXY - 1,
+                };
             }
             else state.born[next] = t;
         } else {
@@ -626,8 +748,9 @@
             if (state.m >= target) { stopPlaying(); return; }
             const crossing = (state.m + 1) % 12 === 0;
             const milestone = (state.m + 1) % (12 * YEARS_PER_SYSTEM) === 0;
+            const bigMilestone = (state.m + 1) % MONTHS_PER_GALAXY === 0;
             setMonth(state.m + 1, true);
-            state.playing.timer = setTimeout(step, milestone ? 7000 : crossing ? 3000 : 650);
+            state.playing.timer = setTimeout(step, bigMilestone ? 13000 : milestone ? 7000 : crossing ? 3000 : 650);
         };
         state.playing.timer = setTimeout(step, 900);
     }
@@ -644,6 +767,7 @@
     todayTick.style.transform = 'translateX(-50%)';
     if (NOW / MAX < 0.2) todayTick.style.display = 'none';
     $('tick-end').textContent = `${monthLabel(MAX).short}/${monthLabel(MAX).year}`;
+    if (NOW / MAX > 0.8) $('tick-end').style.visibility = 'hidden';
 
     // tooltip e paralaxe
     function pointerMove(e) {

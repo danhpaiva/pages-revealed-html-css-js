@@ -16,13 +16,13 @@ Site estático em **HTML, CSS e JavaScript puro** (sem frameworks) publicado no 
 |------|--------|-----------|
 | O Mago | [`pages/gandalf.html`](pages/gandalf.html) | O mago fica no centro da tela e afasta um dragão com rajadas de magia. O dragão cai num canto aleatório, fica tonto e volta a atacar, em ciclo infinito. Ele nunca morre. |
 | O Livro | [`pages/livro.html`](pages/livro.html) | O conteúdo do livro (protegido por senha) em formato de livro, com paginação automática, índice, busca, ajuste de fonte e progresso salvo. Duas páginas no desktop e uma no celular. |
-| A Galáxia | [`pages/galaxia.html`](pages/galaxia.html) | Uma estrela nova a cada mês a partir de 2026/04. Ao completar o ano, as 12 estrelas viram um planeta, e a cada 5 anos os 5 planetas viram um sistema solar. |
+| A Galáxia | [`pages/galaxia.html`](pages/galaxia.html) | Uma estrela nova a cada mês a partir de 2026/04. Ao completar o ano, as 12 estrelas viram um planeta, a cada 5 anos os 5 planetas viram um sistema solar, e a cada 10 anos 2 sistemas viram uma galáxia. |
 
 Detalhes de cada uma:
 
 - **Mago:** canvas 2D com máquina de estados (`approach → knock → dizzy → takeoff`). O dragão é desenhado por código.
 - **Livro:** o Markdown é convertido com [marked](https://marked.js.org/) e dividido em blocos. Os blocos são medidos no DOM para decidir o que cabe em cada página, e parágrafos e itens longos são divididos entre páginas. A paginação é refeita ao redimensionar a tela ou mudar a fonte.
-- **Galáxia:** progressão em três níveis: 1 mês = estrela, 12 meses = planeta, 5 anos = sistema solar (os 5 planetas entram em órbita de um sol e vão para o canto superior direito). Assim o céu cresce em beleza sem ficar poluído: no máximo 12 estrelas e 4 planetas soltos, mais os sistemas já formados. Há um controle de tempo e o botão "Reviver a jornada".
+- **Galáxia:** progressão em quatro níveis: 1 mês = estrela, 12 meses = planeta, 5 anos = sistema solar (os 5 planetas entram em órbita de um sol) e 10 anos = galáxia espiral (2 sistemas se fundem). Assim o céu cresce em beleza sem ficar poluído: no máximo 12 estrelas, 4 planetas e 1 sistema soltos, mais as galáxias já formadas, que ficam pequenas no topo. Há um controle de tempo e o botão "Reviver a jornada".
 
 ---
 
@@ -90,7 +90,7 @@ O servidor local é necessário porque o livro carrega o Markdown com `fetch`, o
   ```
 
   Depois faça commit de `content/livro.enc.json`. Para trocar a senha, rode o comando de novo com a nova senha.
-- **Galáxia:** no topo de `assets/js/galaxia.js`, ajuste `START_YEAR`, `START_MONTH` e `YEARS_PER_SYSTEM`. Para pré-visualizar outra data, use `pages/galaxia.html?hoje=2031-04`.
+- **Galáxia:** no topo de `assets/js/galaxia.js`, ajuste `START_YEAR`, `START_MONTH`, `YEARS_PER_SYSTEM` e `SYSTEMS_PER_GALAXY`. Para pré-visualizar outra data, use `pages/galaxia.html?hoje=2031-04`.
 - **Cores e fontes:** variáveis CSS em `assets/css/base.css` (`:root`) e `assets/css/livro.css`.
 
 ---
