@@ -1,12 +1,14 @@
 /* A Galáxia do tempo.
    - A cada mês que passa, nasce uma estrela nova (formando uma constelação).
    - Quando o ano fecha (12 estrelas), elas se unem e viram um planeta.
-   - Só as estrelas do ano corrente aparecem; os anos anteriores viram planetas,
-     então a tela cresce em beleza sem ficar poluída. */
+   - A cada 5 anos, os 5 planetas entram em órbita de um sol e viram um sistema solar.
+   - Só as estrelas do ano corrente e os planetas do ciclo atual ficam soltos; o
+     resto vira sistemas pequenos, então a tela cresce em beleza sem ficar poluída. */
 (function () {
     // ===== CONFIGURAÇÃO =====
     const START_YEAR = 2026;
     const START_MONTH = 4;          // abril de 2026 = primeira estrela
+    const YEARS_PER_SYSTEM = 5;     // a cada 5 planetas (anos) nasce um sistema solar
     const FUTURE_MONTHS = 48;       // quanto o controle de tempo permite viajar adiante
     // ========================
 
@@ -43,7 +45,12 @@
     function monthsSinceStart(date) {
         return (date.getFullYear() - START_YEAR) * 12 + (date.getMonth() + 1 - START_MONTH);
     }
-    const NOW = Math.max(0, monthsSinceStart(new Date()));
+    // ?hoje=AAAA-MM simula outra data (para pré-visualizar o futuro ou testar marcos)
+    function currentDate() {
+        const m = /^(\d{4})-(\d{1,2})$/.exec(new URLSearchParams(location.search).get('hoje') || '');
+        return m ? new Date(+m[1], +m[2] - 1, 1) : new Date();
+    }
+    const NOW = Math.max(0, monthsSinceStart(currentDate()));
     const MAX = NOW + FUTURE_MONTHS;
 
     function monthLabel(idx) {
@@ -53,6 +60,7 @@
 
     const planetsAt = (m) => Math.floor(m / 12);
     const starsAt = (m) => (m % 12) + 1;
+    const systemsAt = (m) => Math.floor(planetsAt(m) / YEARS_PER_SYSTEM);
 
     const state = {
         m: NOW,
@@ -104,9 +112,9 @@
         const p = cycleShape(c)[k];
         if (W / SKY_H < 0.85) {
             // retrato: a constelação desce pela tela
-            return { x: W * (0.5 + p.l * 0.34), y: SKY_H * (0.09 + p.t * 0.5), p };
+            return { x: W * (0.5 + p.l * 0.34), y: SKY_H * (0.17 + p.t * 0.42), p };
         }
-        return { x: W * (0.1 + p.t * 0.8), y: SKY_H * (0.36 + p.l * 0.17), p };
+        return { x: W * (0.14 + p.t * 0.72), y: SKY_H * (0.38 + p.l * 0.15), p };
     }
 
     // ---------------------------------------------------------
@@ -128,14 +136,12 @@
         [0.38, 0.9], [0.86, 0.62], [0.16, 0.92], [0.5, 0.9], [0.3, 0.66], [0.7, 0.6],
     ];
 
-    function planetInfo(i, total) {
+    function planetInfo(i) {
         const r = rng(4242 + i * 97);
         const pal = PALETTES[i % PALETTES.length];
-        let sx, sy;
-        if (i < SLOTS.length) { [sx, sy] = SLOTS[i]; }
-        else { sx = 0.06 + r() * 0.88; sy = 0.58 + r() * 0.36; }
-        const shrink = 1 / (1 + Math.max(0, total - 4) * 0.07);
-        const size = (0.7 + r() * 0.5) * shrink * (i === 0 ? 1.1 : 1);
+        const slot = i % YEARS_PER_SYSTEM;
+        const [sx, sy] = SLOTS[slot];
+        const size = (0.7 + r() * 0.5) * (slot === 0 ? 1.1 : 1);
         return { i, pal, sx, sy, size, tilt: -0.5 + r() * 0.8, seed: 77 + i * 31, ring: pal.ring, phase: r() * TAU };
     }
 
@@ -234,9 +240,10 @@
         return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
     }
 
-    function drawPlanet(info, now, alpha, scale) {
-        const p = planetPos(info);
-        const bob = Math.sin(now / 2600 + info.phase) * 3 * U;
+    function drawPlanet(info, now, alpha, scale, at) {
+        const base = planetPos(info);
+        const p = at ? { x: at.x, y: at.y, R: base.R } : base;
+        const bob = at ? 0 : Math.sin(now / 2600 + info.phase) * 3 * U;
         const spr = planetSprite(info, p.R);
         const s = spr.S * (scale || 1);
         ctx.save();
@@ -244,6 +251,62 @@
         ctx.drawImage(spr.c, p.x - s / 2, p.y + bob - s / 2, s, s);
         ctx.restore();
         return { x: p.x, y: p.y + bob, R: p.R };
+    }
+
+    // ---------------------------------------------------------
+    // Sistemas solares (a cada 5 anos)
+    // ---------------------------------------------------------
+    const SUN_HUES = [42, 28, 200, 55, 330];
+
+    function systemInfo(n) {
+        const r = rng(8800 + n * 53);
+        return { hue: SUN_HUES[n % SUN_HUES.length], tilt: -0.35 + r() * 0.7, phase: Array.from({ length: YEARS_PER_SYSTEM }, () => r() * TAU) };
+    }
+
+    function systemPos(n, count) {
+        const col = n % 6, row = Math.floor(n / 6);
+        const shrink = Math.max(0.6, 1 - 0.05 * (count - 1));
+        const R = Math.max(28, Math.min(W, SKY_H) * 0.1 * shrink * (W / SKY_H < 0.85 ? 0.9 : 1));
+        return { x: W * (0.91 - 0.82 * (col / 5)), y: SKY_H * (0.085 + row * 0.1), R };
+    }
+
+    function drawSystem(n, x, y, R, now, alpha, form) {
+        const info = systemInfo(n);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(x, y);
+        ctx.rotate(info.tilt);
+        ctx.globalCompositeOperation = 'lighter';
+        const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 0.9);
+        glow.addColorStop(0, `hsla(${info.hue}, 100%, 70%, ${0.7 * form})`);
+        glow.addColorStop(0.35, `hsla(${info.hue}, 100%, 60%, ${0.18 * form})`);
+        glow.addColorStop(1, `hsla(${info.hue}, 100%, 55%, 0)`);
+        ctx.fillStyle = glow;
+        ctx.fillRect(-R, -R, R * 2, R * 2);
+        ctx.globalCompositeOperation = 'source-over';
+        for (let j = 0; j < YEARS_PER_SYSTEM; j++) {
+            const orbit = 0.45 + 0.14 * j;
+            const a = R * orbit * form, b = a * 0.36;
+            ctx.strokeStyle = `rgba(255, 244, 220, ${0.2 * form})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.ellipse(0, 0, a, b, 0, 0, TAU); ctx.stroke();
+            const ang = info.phase[j] + (now / 1000) * 0.7 / Math.sqrt(orbit);
+            const px = Math.cos(ang) * a, py = Math.sin(ang) * b;
+            const pal = PALETTES[(n * YEARS_PER_SYSTEM + j) % PALETTES.length];
+            const pr = Math.max(2.4, R * 0.075) * form;
+            const g = ctx.createRadialGradient(px - pr * 0.3, py - pr * 0.3, 0, px, py, pr);
+            g.addColorStop(0, pal.a); g.addColorStop(1, pal.b);
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(px, py, pr, 0, TAU); ctx.fill();
+        }
+        const cr = R * 0.2 * (0.4 + 0.6 * form);
+        const core = ctx.createRadialGradient(0, 0, 0, 0, 0, cr);
+        core.addColorStop(0, '#fffdf2');
+        core.addColorStop(0.5, `hsl(${info.hue}, 100%, 72%)`);
+        core.addColorStop(1, `hsla(${info.hue}, 100%, 60%, 0)`);
+        ctx.fillStyle = core;
+        ctx.beginPath(); ctx.arc(0, 0, cr, 0, TAU); ctx.fill();
+        ctx.restore();
     }
 
     // ---------------------------------------------------------
@@ -381,19 +444,30 @@
         hitTargets = [];
         const m = state.m;
         const planets = planetsAt(m);
+        const systems = systemsAt(m);
         const merging = state.merge;
+        const sysMerging = merging && merging.kind === 'system' ? merging.sys : -1;
 
-        // planetas já formados
-        for (let i = 0; i < planets; i++) {
+        // sistemas solares já formados
+        for (let n = 0; n < systems; n++) {
+            if (n === sysMerging) continue;
+            const sp = systemPos(n, systems);
+            drawSystem(n, sp.x, sp.y, sp.R, now, 1, 1);
+            const a = monthLabel(n * YEARS_PER_SYSTEM * 12), b = monthLabel((n + 1) * YEARS_PER_SYSTEM * 12 - 1);
+            hitTargets.push({ x: sp.x, y: sp.y, r: sp.R * 1.1, label: `Sistema solar ${n + 1} · ${a.short}/${a.year} – ${b.short}/${b.year}` });
+        }
+
+        // planetas soltos do ciclo atual
+        for (let i = systems * YEARS_PER_SYSTEM; i < planets; i++) {
             if (merging && i === merging.cycle) continue;
-            const info = planetInfo(i, planets);
+            const info = planetInfo(i);
             const pp = drawPlanet(info, now);
             const a = monthLabel(i * 12), b = monthLabel(i * 12 + 11);
             hitTargets.push({ x: pp.x, y: pp.y, r: pp.R * 1.2, label: `${info.pal.name} · ${a.short}/${a.year} – ${b.short}/${b.year}` });
         }
 
         if (merging) {
-            drawMerge(now, merging, planets);
+            drawMerge(now, merging);
             return;
         }
 
@@ -424,13 +498,12 @@
         });
     }
 
-    function drawMerge(now, mg, planets) {
-        const u = clamp((now - mg.t0) / mg.dur, 0, 1);
-        const info = planetInfo(mg.cycle, planets);
+    // 12 estrelas giram e se fundem no planeta do ano (u de 0 a 1)
+    function drawStarFusion(now, cycle, u) {
+        const info = planetInfo(cycle);
         const pp = planetPos(info);
         const swirlE = easeInOut(clamp(u / 0.7, 0, 1));
 
-        // brilho de formação
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         const glowR = pp.R * (1 + 3 * Math.sin(Math.PI * clamp(u * 1.1, 0, 1)));
@@ -442,7 +515,7 @@
         ctx.restore();
 
         for (let k = 0; k < 12; k++) {
-            const s = starPos(mg.cycle, k);
+            const s = starPos(cycle, k);
             const dx = s.x - pp.x, dy = s.y - pp.y;
             const f = 1 - swirlE;
             const ang = swirlE * 3.2;
@@ -453,6 +526,45 @@
 
         const pu = clamp((u - 0.58) / 0.42, 0, 1);
         if (pu > 0) drawPlanet(info, now, easeOut(pu), 0.35 + 0.65 * easeOut(pu));
+    }
+
+    // 5 planetas giram em torno do centro e acendem um sol (u de 0 a 1)
+    function drawSystemFormation(now, mg, u) {
+        const c = systemPos(mg.sys, mg.sys + 1);
+        const e = easeInOut(u);
+        const ang = e * 3.6;
+        for (let j = 0; j < YEARS_PER_SYSTEM; j++) {
+            const info = planetInfo(mg.sys * YEARS_PER_SYSTEM + j);
+            const start = planetPos(info);
+            const dx = start.x - c.x, dy = start.y - c.y;
+            const f = 1 - e;
+            const at = { x: c.x + (dx * Math.cos(ang) - dy * Math.sin(ang)) * f, y: c.y + (dx * Math.sin(ang) + dy * Math.cos(ang)) * f };
+            drawPlanet(info, now, 1 - clamp((u - 0.7) / 0.3, 0, 1), 1 - 0.85 * e, at);
+        }
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const gr = c.R * (0.8 + 2.4 * Math.sin(Math.PI * clamp(u * 1.05, 0, 1)));
+        const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, gr);
+        g.addColorStop(0, `rgba(255, 240, 200, ${0.85 * Math.sin(Math.PI * clamp(u * 0.95, 0, 1))})`);
+        g.addColorStop(1, 'rgba(255, 240, 200, 0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(c.x - gr, c.y - gr, gr * 2, gr * 2);
+        ctx.restore();
+        const form = easeOut(clamp((u - 0.45) / 0.55, 0, 1));
+        if (form > 0) drawSystem(mg.sys, c.x, c.y, c.R, now, form, form);
+    }
+
+    function drawMerge(now, mg) {
+        const u = clamp((now - mg.t0) / mg.dur, 0, 1);
+        if (mg.kind === 'system') {
+            // fase 1: estrelas viram o 5º planeta; fase 2: os 5 planetas viram um sistema
+            if (u < 0.5) {
+                for (let j = 0; j < YEARS_PER_SYSTEM - 1; j++) drawPlanet(planetInfo(mg.sys * YEARS_PER_SYSTEM + j), now);
+                drawStarFusion(now, mg.cycle, u / 0.42);
+            } else drawSystemFormation(now, mg, (u - 0.5) / 0.5);
+        } else {
+            drawStarFusion(now, mg.cycle, u);
+        }
         if (u >= 1) state.merge = null;
     }
 
@@ -462,18 +574,22 @@
     function updateHud(announce) {
         const m = state.m;
         const lb = monthLabel(m);
-        const planets = planetsAt(m), stars = starsAt(m);
+        const planets = planetsAt(m), stars = starsAt(m), systems = systemsAt(m);
         $('when').textContent = `${lb.name} de ${lb.year}`;
         const sp = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-        $('count').textContent = `${sp(stars, 'estrela', 'estrelas')} no ano · ${sp(planets, 'planeta', 'planetas')}`;
+        $('count').textContent = `${sp(stars, 'estrela', 'estrelas')} no ano · ${sp(planets, 'planeta', 'planetas')}`
+            + (systems ? ` · ${sp(systems, 'sistema solar', 'sistemas solares')}` : '');
         slider.value = m;
         slider.style.setProperty('--fill', `${(m / MAX) * 100}%`);
         const hint = $('hint');
-        if (m > NOW) hint.textContent = 'Você está vendo o futuro da galáxia.';
+        const lastOfCycle = planets % YEARS_PER_SYSTEM === YEARS_PER_SYSTEM - 1;
+        if (m > 0 && m % (12 * YEARS_PER_SYSTEM) === 0) hint.textContent = `Marco de ${YEARS_PER_SYSTEM} anos: os planetas viraram um sistema solar!`;
+        else if (m > NOW) hint.textContent = 'Você está vendo o futuro da galáxia.';
+        else if (stars === 12 && lastOfCycle) hint.textContent = 'No próximo mês, as 12 estrelas viram um planeta e os 5 planetas formam um sistema solar!';
         else if (stars === 12) hint.textContent = 'No próximo mês, as 12 estrelas vão se unir e virar um planeta.';
         else if (m === NOW) hint.textContent = 'Toque numa estrela ou planeta para ver sua data.';
         else hint.textContent = '';
-        canvas.setAttribute('aria-label', `Céu em ${lb.name} de ${lb.year}: ${sp(stars, 'estrela', 'estrelas')} no ano e ${sp(planets, 'planeta formado', 'planetas formados')}`);
+        canvas.setAttribute('aria-label', `Céu em ${lb.name} de ${lb.year}: ${sp(stars, 'estrela', 'estrelas')} no ano, ${sp(planets, 'planeta formado', 'planetas formados')} e ${sp(systems, 'sistema solar', 'sistemas solares')}`);
     }
 
     function setMonth(m, animate) {
@@ -483,7 +599,10 @@
         state.m = next;
         const t = performance.now();
         if (animate && !reduceMotion && next === old + 1) {
-            if (planetsAt(next) === planetsAt(old) + 1) state.merge = { t0: t, dur: 2600, cycle: planetsAt(old) };
+            if (planetsAt(next) === planetsAt(old) + 1) {
+                const isSystem = planetsAt(next) % YEARS_PER_SYSTEM === 0;
+                state.merge = { t0: t, dur: isSystem ? 6400 : 2600, cycle: planetsAt(old), kind: isSystem ? 'system' : 'planet', sys: planetsAt(next) / YEARS_PER_SYSTEM - 1 };
+            }
             else state.born[next] = t;
         } else {
             state.merge = null;
@@ -506,8 +625,9 @@
             if (!state.playing) return;
             if (state.m >= target) { stopPlaying(); return; }
             const crossing = (state.m + 1) % 12 === 0;
+            const milestone = (state.m + 1) % (12 * YEARS_PER_SYSTEM) === 0;
             setMonth(state.m + 1, true);
-            state.playing.timer = setTimeout(step, crossing ? 3000 : 650);
+            state.playing.timer = setTimeout(step, milestone ? 7000 : crossing ? 3000 : 650);
         };
         state.playing.timer = setTimeout(step, 900);
     }

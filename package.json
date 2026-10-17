@@ -14,6 +14,7 @@
     "lint:js": "eslint assets/js scripts",
     "check": "node scripts/check-site.mjs",
     "build": "node scripts/build.mjs",
+    "encrypt": "node scripts/encrypt-book.mjs",
     "test": "npm run lint && npm run check"
   },
   "devDependencies": {

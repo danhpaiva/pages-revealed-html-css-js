@@ -15,14 +15,14 @@ Site estático em **HTML, CSS e JavaScript puro** (sem frameworks) publicado no 
 | Arte | Página | Descrição |
 |------|--------|-----------|
 | O Mago | [`pages/gandalf.html`](pages/gandalf.html) | O mago fica no centro da tela e afasta um dragão com rajadas de magia. O dragão cai num canto aleatório, fica tonto e volta a atacar, em ciclo infinito. Ele nunca morre. |
-| O Livro | [`pages/livro.html`](pages/livro.html) | O conteúdo de [`content/livro.md`](content/livro.md) em formato de livro, com paginação automática, índice, busca, ajuste de fonte e progresso salvo. Duas páginas no desktop e uma no celular. |
-| A Galáxia | [`pages/galaxia.html`](pages/galaxia.html) | Uma estrela nova a cada mês a partir de 2026/04. Ao completar o ano, as 12 estrelas se unem e viram um planeta. |
+| O Livro | [`pages/livro.html`](pages/livro.html) | O conteúdo do livro (protegido por senha) em formato de livro, com paginação automática, índice, busca, ajuste de fonte e progresso salvo. Duas páginas no desktop e uma no celular. |
+| A Galáxia | [`pages/galaxia.html`](pages/galaxia.html) | Uma estrela nova a cada mês a partir de 2026/04. Ao completar o ano, as 12 estrelas viram um planeta, e a cada 5 anos os 5 planetas viram um sistema solar. |
 
 Detalhes de cada uma:
 
 - **Mago:** canvas 2D com máquina de estados (`approach → knock → dizzy → takeoff`). O dragão é desenhado por código.
 - **Livro:** o Markdown é convertido com [marked](https://marked.js.org/) e dividido em blocos. Os blocos são medidos no DOM para decidir o que cabe em cada página, e parágrafos e itens longos são divididos entre páginas. A paginação é refeita ao redimensionar a tela ou mudar a fonte.
-- **Galáxia:** só as estrelas do ano corrente aparecem. Os anos anteriores viram planetas, então a tela cresce em beleza sem ficar poluída. Há um controle de tempo e o botão "Reviver a jornada".
+- **Galáxia:** progressão em três níveis: 1 mês = estrela, 12 meses = planeta, 5 anos = sistema solar (os 5 planetas entram em órbita de um sol e vão para o canto superior direito). Assim o céu cresce em beleza sem ficar poluído: no máximo 12 estrelas e 4 planetas soltos, mais os sistemas já formados. Há um controle de tempo e o botão "Reviver a jornada".
 
 ---
 
@@ -40,8 +40,10 @@ Detalhes de cada uma:
 │   ├── js/                     # um módulo por página
 │   └── img/                    # imagens otimizadas usadas pelo site
 ├── content/
-│   └── livro.md                # conteúdo do livro (fonte única)
+│   └── livro.enc.json          # livro criptografado (AES-256-GCM)
+├── private/                    # texto em claro do livro (no .gitignore, nunca vai ao repo)
 ├── scripts/
+│   ├── encrypt-book.mjs        # criptografa private/livro.md -> content/livro.enc.json
 │   ├── build.mjs               # gera dist/ só com os arquivos públicos
 │   ├── check-site.mjs          # links quebrados e arquivos órfãos
 │   └── serve.mjs               # servidor local sem dependências
@@ -73,6 +75,7 @@ O servidor local é necessário porque o livro carrega o Markdown com `fetch`, o
 | `npm run serve` | Servidor estático local (`PORT=3000 npm run serve` troca a porta) |
 | `npm run lint` | HTMLHint, Stylelint e ESLint |
 | `npm run check` | Falha se houver referência quebrada ou arquivo sem uso |
+| `npm run encrypt` | Criptografa `private/livro.md` com a senha informada |
 | `npm run build` | Gera `dist/` com o que vai para produção |
 | `npm test` | `lint` + `check` (o mesmo que a CI executa) |
 
@@ -80,8 +83,14 @@ O servidor local é necessário porque o livro carrega o Markdown com `fetch`, o
 
 ## Personalização
 
-- **Texto do livro:** edite `content/livro.md`. Títulos `#` e `##` viram capítulos, e `###` entra no índice.
-- **Galáxia:** no topo de `assets/js/galaxia.js`, ajuste `START_YEAR` e `START_MONTH`.
+- **Texto do livro:** edite `private/livro.md` (títulos `#` e `##` viram capítulos, e `###` entra no índice) e gere a versão criptografada:
+
+  ```bash
+  BOOK_PASSWORD="sua-senha" npm run encrypt   # ou só `npm run encrypt` para digitar
+  ```
+
+  Depois faça commit de `content/livro.enc.json`. Para trocar a senha, rode o comando de novo com a nova senha.
+- **Galáxia:** no topo de `assets/js/galaxia.js`, ajuste `START_YEAR`, `START_MONTH` e `YEARS_PER_SYSTEM`. Para pré-visualizar outra data, use `pages/galaxia.html?hoje=2031-04`.
 - **Cores e fontes:** variáveis CSS em `assets/css/base.css` (`:root`) e `assets/css/livro.css`.
 
 ---
@@ -123,6 +132,16 @@ Pull Request / push em develop            push em main (arquivos do site) ou man
 ## Tecnologias
 
 HTML5, CSS3 (Grid, Flexbox, custom properties), JavaScript ES2022, Canvas 2D, [marked](https://marked.js.org/) via CDN e Google Fonts (Cinzel, Lora e Inter). Ferramentas de desenvolvimento: ESLint, Stylelint e HTMLHint.
+
+---
+
+## Proteção do livro
+
+O livro só existe no site de forma criptografada: AES-256-GCM, com chave derivada da senha por PBKDF2-SHA256 (600.000 iterações). A decifragem acontece no navegador, depois que a senha é digitada. A senha não está em nenhum arquivo do projeto.
+
+- O texto em claro fica em `private/` (ignorado pelo git). O `npm run check` falha se aparecer qualquer `.md` ou `.txt` em `content/`.
+- Como é um site estático, o arquivo criptografado é público e pode ser baixado. A segurança depende da **força da senha**: uma senha só de números (6 dígitos) tem apenas 1 milhão de combinações e pode ser quebrada por força bruta offline. Para proteção real, use uma frase longa.
+- Quem já viu o repositório antes da criptografia pode ter o texto antigo no histórico do git.
 
 ---
 

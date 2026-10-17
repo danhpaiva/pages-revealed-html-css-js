@@ -154,3 +154,6 @@ vite.config.ts.timestamp-*
 
 # Saida de build local
 dist/
+
+# Texto em claro do livro (nunca versionar; so a versao criptografada vai ao repo)
+private/
